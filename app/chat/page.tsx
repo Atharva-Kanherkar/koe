@@ -12,6 +12,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [streaming, setStreaming] = useState(false)
+  const [searching, setSearching] = useState(false)
   const [done, setDone] = useState(false)
   const [saved, setSaved] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -57,14 +58,21 @@ export default function Chat() {
           const payload = trimmed.slice(6)
           if (payload === "[DONE]") continue
           try {
-            const { text } = JSON.parse(payload)
-            full += text
-            const display = full.replace(/\[COMPLETE\]/g, "").trim()
-            setMessages((prev) => {
-              const next = [...prev]
-              next[next.length - 1] = { role: "assistant", content: display }
-              return next
-            })
+            const parsed = JSON.parse(payload)
+            if (parsed.status === "searching") {
+              setSearching(true)
+              continue
+            }
+            if (parsed.text) {
+              setSearching(false)
+              full += parsed.text
+              const display = full.replace(/\[COMPLETE\]/g, "").trim()
+              setMessages((prev) => {
+                const next = [...prev]
+                next[next.length - 1] = { role: "assistant", content: display }
+                return next
+              })
+            }
           } catch {
             // partial chunk
           }
@@ -170,16 +178,25 @@ export default function Chat() {
         ))}
 
         {streaming && messages[messages.length - 1]?.content === "" && (
-          <div className="flex gap-1.5 pr-10 animate-fade-up">
-            {[0, 150, 300].map((delay) => (
-              <span
-                key={delay}
-                className="w-1.5 h-1.5 rounded-full bg-violet-400/50"
-                style={{
-                  animation: `pulse-dot 1.2s ease-in-out ${delay}ms infinite`,
-                }}
-              />
-            ))}
+          <div className="pr-10 animate-fade-up space-y-2">
+            <div className="flex gap-1.5">
+              {[0, 150, 300].map((delay) => (
+                <span
+                  key={delay}
+                  className="w-1.5 h-1.5 rounded-full bg-violet-400/50"
+                  style={{
+                    animation: `pulse-dot 1.2s ease-in-out ${delay}ms infinite`,
+                  }}
+                />
+              ))}
+            </div>
+            {searching && (
+              <p className="text-[11px] text-zinc-600 animate-fade-up">
+                {lang === "ja"
+                  ? "GitHubの貢献を確認中..."
+                  : "Looking up contributions..."}
+              </p>
+            )}
           </div>
         )}
 
