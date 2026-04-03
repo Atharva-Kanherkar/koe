@@ -5,6 +5,12 @@ export async function POST(req: Request) {
   const id =
     Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
 
+  // First user message is the manager's name
+  const firstUserMsg = messages.find(
+    (m: { role: string }) => m.role === "user"
+  )
+  const managerName = firstUserMsg ? firstUserMsg.content.trim() : "Anonymous"
+
   const lastAssistant = [...messages]
     .reverse()
     .find((m: { role: string }) => m.role === "assistant")
@@ -15,6 +21,7 @@ export async function POST(req: Request) {
   await saveFeedback(id, {
     id,
     timestamp: new Date().toISOString(),
+    managerName,
     messages: messages.map((m: { role: string; content: string }) => ({
       role: m.role,
       content: m.content.replace(/\[COMPLETE\]/g, "").trim(),

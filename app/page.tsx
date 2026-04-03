@@ -81,14 +81,18 @@ export default function Dashboard() {
                 style={{ animationDelay: `${(i + 3) * 80}ms` }}
               >
                 <summary className="px-4 py-3 cursor-pointer flex items-center justify-between text-sm hover:bg-zinc-900/40 rounded-xl transition-colors">
-                  <span className="text-zinc-400">
-                    {new Date(entry.timestamp).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-zinc-300">
+                      {entry.managerName || "Anonymous"}-san
+                    </span>
+                    <span className="text-zinc-700 text-xs">
+                      {new Date(entry.timestamp).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
                   <span className="text-zinc-700 text-xs group-open:rotate-90 transition-transform">
                     &rsaquo;
                   </span>

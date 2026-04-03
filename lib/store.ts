@@ -1,6 +1,7 @@
 export interface FeedbackEntry {
   id: string
   timestamp: string
+  managerName: string
   messages: { role: string; content: string }[]
   summary: string
 }
