@@ -8,6 +8,7 @@ interface Message {
 }
 
 export default function Chat() {
+  const [lang, setLang] = useState<"en" | "ja" | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [streaming, setStreaming] = useState(false)
@@ -15,26 +16,23 @@ export default function Chat() {
   const [saved, setSaved] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const started = useRef(false)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  useEffect(() => {
-    if (started.current) return
-    started.current = true
-    streamResponse([])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  function chooseLang(l: "en" | "ja") {
+    setLang(l)
+    streamResponse([], l)
+  }
 
-  async function streamResponse(history: Message[]) {
+  async function streamResponse(history: Message[], overrideLang?: string) {
     setStreaming(true)
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, lang: overrideLang || lang }),
       })
       if (!res.body) return
 
@@ -112,12 +110,44 @@ export default function Chat() {
     streamResponse(updated)
   }
 
+  if (!lang) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="text-center animate-fade-up">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent mb-2">
+            koe
+          </h1>
+          <p className="text-zinc-600 text-xs mb-10">
+            Choose your language / 言語を選択
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => chooseLang("en")}
+              className="px-6 py-3 rounded-xl border border-zinc-800/60 bg-zinc-900/30 text-sm text-zinc-300 hover:border-violet-500/40 hover:bg-zinc-900/60 transition-all"
+            >
+              English
+            </button>
+            <button
+              onClick={() => chooseLang("ja")}
+              className="px-6 py-3 rounded-xl border border-zinc-800/60 bg-zinc-900/30 text-sm text-zinc-300 hover:border-violet-500/40 hover:bg-zinc-900/60 transition-all"
+            >
+              日本語
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen flex flex-col max-w-xl mx-auto">
-      <div className="px-6 py-5 border-b border-zinc-800/30">
+      <div className="px-6 py-5 border-b border-zinc-800/30 flex items-center justify-between">
         <h1 className="text-lg font-semibold bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
           koe
         </h1>
+        <span className="text-[11px] text-zinc-700">
+          {lang === "ja" ? "日本語" : "English"}
+        </span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-8 space-y-6">
@@ -156,7 +186,9 @@ export default function Chat() {
         {saved && (
           <div className="animate-fade-up text-center pt-4">
             <p className="text-xs text-zinc-600">
-              Feedback saved. You may close this page.
+              {lang === "ja"
+                ? "フィードバックを保存しました。このページを閉じて大丈夫です。"
+                : "Feedback saved. You may close this page."}
             </p>
           </div>
         )}
@@ -177,7 +209,7 @@ export default function Chat() {
                   send()
                 }
               }}
-              placeholder="Type your response..."
+              placeholder={lang === "ja" ? "回答を入力..." : "Type your response..."}
               rows={1}
               disabled={streaming}
               className="flex-1 bg-zinc-900/40 border border-zinc-800/50 rounded-xl px-4 py-2.5 text-sm text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:border-violet-500/40 resize-none transition-colors disabled:opacity-40"

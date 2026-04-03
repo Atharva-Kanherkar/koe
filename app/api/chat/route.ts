@@ -1,6 +1,6 @@
 import OpenAI from "openai"
 
-const SYSTEM_PROMPT = `You are a professional feedback collector for a workplace setting. You are gathering brief, candid feedback from a manager about their intern.
+const BASE_PROMPT = `You are a professional feedback collector for a workplace setting. You are gathering brief, candid feedback from a manager about their intern.
 
 Rules:
 - Greet them warmly in one sentence. Mention this will take under 2 minutes.
@@ -12,14 +12,22 @@ Rules:
 - Be professional, warm, and respectful of their time.
 - If they give short answers, accept them gracefully — do not push for more detail.`
 
+const LANG: Record<string, string> = {
+  ja: `\n\nIMPORTANT: Conduct the ENTIRE conversation in Japanese (日本語). All your questions, responses, and the final summary must be in Japanese. Use polite/formal language (敬語).`,
+  en: `\n\nConduct the entire conversation in English.`,
+}
+
 export async function POST(req: Request) {
-  const { messages } = await req.json()
+  const { messages, lang = "en" } = await req.json()
 
   const openai = new OpenAI()
 
   const stream = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+    messages: [
+      { role: "system", content: BASE_PROMPT + (LANG[lang] || LANG.en) },
+      ...messages,
+    ],
     stream: true,
     temperature: 0.7,
     max_tokens: 300,
